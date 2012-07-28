@@ -1,10 +1,40 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
 
-	<SurfaceView android:id="@+id/preview"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"/>
+   
+    <RelativeLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="120dp"
+    android:layout_height="wrap_content"
+    android:background="#000000"
+    >
     
-</RelativeLayout>
+        <ImageView android:id="@+id/logo" 
+	    android:layout_height="100dp"
+	    android:layout_width="100dp" 
+	    android:src="@drawable/ic_launcher" 
+	    android:rotation="270"
+	    android:layout_centerHorizontal="true"
+	    android:layout_alignParentBottom="true"
+	    />
+        
+        <TextView android:id="@+id/title_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+			android:text="@string/title_activity_vision" 
+			android:textSize="30dp"
+			android:rotation="270"
+			android:layout_centerInParent="true"
+			android:textColor="#ffffff"
+        />
+    
+    </RelativeLayout>
+    
+    
+	<SurfaceView android:id="@+id/preview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    
+</LinearLayout>

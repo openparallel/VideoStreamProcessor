@@ -55,14 +55,14 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_vision);
+		
+//		setContentView(R.layout.activity_vision);
 		
 		final Window window = getWindow();
-        //window.requestFeature(Window.FEATURE_NO_TITLE);
+        window.requestFeature(Window.FEATURE_NO_TITLE);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         setContentView(R.layout.activity_vision);
 
         final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);

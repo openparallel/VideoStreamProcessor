@@ -1,8 +1,7 @@
 <resources>
 
     <string name="app_name">VideoStreamProcessor</string>
-    <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
-    <string name="title_activity_vision">VisionActivity</string>
+    <string name="title_activity_vision">NeVideo</string>
 
 </resources>
