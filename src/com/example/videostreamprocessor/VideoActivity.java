@@ -2,6 +2,8 @@ package com.example.videostreamprocessor;
 
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.hardware.Camera;
@@ -19,6 +21,16 @@ import android.support.v4.app.NavUtils;
 public class VideoActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback,
 SharedPreferences.OnSharedPreferenceChangeListener {
 
+	//use the JNI/NDK
+	static {
+		System.loadLibrary("opencv");
+	}
+
+	//for the following functions
+	public native byte[] getSourceImage();
+	public native boolean setSourceImage(int[] data, int w, int h);
+	public native boolean doChainOfImageProcessingOperations();
+	
 	private Camera camera;
 	private SurfaceView preview;
 	private SurfaceHolder holder;
@@ -176,7 +188,29 @@ SharedPreferences.OnSharedPreferenceChangeListener {
                     y = 0;
                 }
 
-                canvas.drawBitmap(rgb, 0, size.width, x, y, size.width, size.height, false, paint);
+                //process the rgb (in the NDK)
+                //get width and height
+                int w = size.width;
+				int h = size.height;
+
+				//pass the pixels to OpenCV for later processing
+				this.setSourceImage(rgb, w, h);
+				
+				//process sepia toning
+				this.doChainOfImageProcessingOperations();
+				
+				//pull the image back
+				byte[] resultData = this.getSourceImage();
+
+				//process the OpenCV returned data back into a usable bitmap and display it
+				Bitmap resultPhoto = BitmapFactory.decodeByteArray(resultData, 0, resultData.length);
+				
+				//set the canvas with the processed bitmap
+				canvas.drawBitmap(resultPhoto, 0, 0, paint);
+				//end of processing the rgb
+				
+				
+                //canvas.drawBitmap(rgb, 0, size.width, x, y, size.width, size.height, false, paint);
             } finally {
                 if (canvas != null) {
                     holder.unlockCanvasAndPost(canvas);
