@@ -1,0 +1,218 @@
+package com.example.videostreamprocessor;
+
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.hardware.Camera;
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.app.Activity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.Window;
+import android.view.WindowManager;
+import android.support.v4.app.NavUtils;
+
+public class VideoActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback,
+SharedPreferences.OnSharedPreferenceChangeListener {
+
+	private Camera camera;
+	private SurfaceView preview;
+	private SurfaceHolder holder;
+
+	private int sizeIndex;
+	private Camera.Size size;
+
+	private int[] rgb;
+	private final Paint paint = new Paint();
+
+	private boolean skipFrames;
+	private int skipBelow;
+	private int skipUntil;
+
+	private int frameCount;
+
+	private float width;
+	private float height;
+	private float ratio;
+
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_vision);
+		
+		final Window window = getWindow();
+        //window.requestFeature(Window.FEATURE_NO_TITLE);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        setContentView(R.layout.activity_vision);
+
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences.registerOnSharedPreferenceChangeListener(this);
+
+        preview = (SurfaceView) findViewById(R.id.preview);
+        
+        configure(preferences);
+        
+        holder = preview.getHolder();
+        holder.addCallback(this);
+        
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.activity_vision, menu);
+		return true;
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+			String key) {
+		// TODO Auto-generated method stub
+
+	}
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (camera == null) {
+            camera = Camera.open();
+            final Camera.Parameters parameters = camera.getParameters();
+            size = parameters.getSupportedPreviewSizes().get(sizeIndex);
+            parameters.setPreviewSize(size.width, size.height);
+            camera.setParameters(parameters);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (camera != null) {
+            camera.setPreviewCallback(null);
+            camera.stopPreview();
+            camera.release();
+            camera = null;
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        if (camera != null) {
+            preview.setWillNotDraw(false);
+            camera.startPreview();
+
+            camera.setPreviewCallback(this);
+        }
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        this.width = width;
+        this.height = height;
+        this.ratio = this.width / this.height;
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        if (camera != null) {
+            camera.setPreviewCallback(null);
+            camera.stopPreview();
+            camera.release();
+            camera = null;
+        }
+    }
+
+	@Override
+	public void onPreviewFrame(byte[] yuv, Camera camera) {
+		if (holder != null) {
+            if (skipFrames) {
+                if (frameCount < skipBelow) {
+                    frameCount++;
+                    return;
+                } else if (frameCount >= skipUntil) {
+                    frameCount = 0;
+                    return;
+                }
+            }
+
+            frameCount++;
+
+            Canvas canvas = null;
+
+            try {
+                canvas = holder.lockCanvas(null);
+
+                if (rgb == null) {
+                    rgb = new int[size.width * size.height];
+                }
+
+                Yuv420.decode(yuv, rgb, size.width, size.height);
+
+                final float x;
+                final float y;
+
+                if (size.width < width && size.height < height) {
+                    final float bitmapRatio = (float) size.width / (float) size.height;
+
+                    final float scale;
+
+                    if (bitmapRatio < ratio) {
+                        scale = height / (float) size.height;
+                    } else {
+                        scale = width / (float) size.width;
+                    }
+
+                    canvas.scale(scale, scale, canvas.getWidth() / 2f, canvas.getHeight() / 2f);
+                    x = width / 2f - size.width / 2f;
+                    y = height / 2f - size.height / 2f;
+                } else {
+                    x = 0;
+                    y = 0;
+                }
+
+                canvas.drawBitmap(rgb, 0, size.width, x, y, size.width, size.height, false, paint);
+            } finally {
+                if (canvas != null) {
+                    holder.unlockCanvasAndPost(canvas);
+                }
+            }
+        }
+
+		
+	}
+	
+	private void configure(SharedPreferences preferences) {
+//        final String index = preferences.getString("sizeIndex", getString(R.string.defaultSizeIndex));
+//
+//        if (index != null) {
+//            size = null;
+//            sizeIndex = Integer.parseInt(index);
+//            rgb = null;
+//        }
+
+//        skipFrames = preferences.getBoolean("skipFrames", Boolean.parseBoolean(getString(R.string.defaultSkipFrames)));
+        skipFrames = false;
+//        final int rate = Integer.parseInt(preferences.getString("skipRate", getString(R.string.defaultSkipRate)));
+//        final int divisor = MoreMath.gcd(rate, 100);
+//        
+        final int rate = 30;
+        final int divisor = 10;
+        skipBelow = rate / divisor;
+        skipUntil = 100 / divisor;
+
+//        if (preferences.getBoolean("displayName", Boolean.parseBoolean(getString(R.string.defaultDisplayName)))) {
+//            name.setVisibility(View.VISIBLE);
+//        } else {
+//            name.setVisibility(View.INVISIBLE);
+//        }
+    }
+
+
+
+}
