@@ -168,7 +168,7 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 			oldTime = newTime;
 
 			if(frameCount > 0 && frameCount < 101){
-				runtimes[frameCount] = (fpms/1000);
+				runtimes[frameCount-1] = (fpms/1000);
 			}
 			
 			if(frameCount == 101){
@@ -188,7 +188,7 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 					fos.write("Run\tMethod\tFps\n".getBytes());
 
 					for(int i = 0; i < 100; i++){
-						fos.write(((i+1)+"\t"+ 1 +"\t"+ runtimes[i] +"\n").getBytes());
+						fos.write(((i+1)+"\t"+ 2 +"\t"+ runtimes[i] +"\n").getBytes());
 					}
 
 					fos.close();
