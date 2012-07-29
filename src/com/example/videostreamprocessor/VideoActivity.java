@@ -1,6 +1,10 @@
 package com.example.videostreamprocessor;
 
+import java.io.File;
+import java.io.FileOutputStream;
+
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,6 +14,7 @@ import android.hardware.Camera;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.app.Activity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
@@ -46,11 +51,14 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 	private int skipUntil;
 
 	private int frameCount;
-
+	private float oldTime;
+	private float newTime;
+	
 	private float width;
 	private float height;
 	private float ratio;
 
+	float[] runtimes;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -143,16 +151,65 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 	@Override
 	public void onPreviewFrame(byte[] yuv, Camera camera) {
 		if (holder != null) {
-            if (skipFrames) {
-                if (frameCount < skipBelow) {
-                    frameCount++;
-                    return;
-                } else if (frameCount >= skipUntil) {
-                    frameCount = 0;
-                    return;
-                }
-            }
+			newTime = android.os.SystemClock.uptimeMillis();
+			float dt = newTime-oldTime;
+		
+			float fpms = 1.0f / dt;
+			
+//			Log.d("Captain's Log", "(ms) oldTime-> " + oldTime + " newTime-> " + newTime);
+//			Log.d("Captain's Log", "(sec) oldTime-> " + (oldTime/1000) + " newTime-> " + (newTime/1000));
+//			
+//			Log.d("Captain's Log", "deltaT (ms): "+dt+" @ frame "+ frameCount);
+//			Log.d("Captain's Log", "deltaT (sec): "+(dt/1000)+" @ frame "+ frameCount);
+//
+//			Log.d("Captain's Log", "FpMs: "+fpms);
+//			Log.d("Captain's Log", "Fps: "+ (fpms/1000));
+			
+			oldTime = newTime;
 
+			if(frameCount > 0 && frameCount < 101){
+				runtimes[frameCount] = (fpms/1000);
+			}
+			
+			if(frameCount == 101){
+				String file = "/runtimes.txt";
+
+				//write it to file
+				try {
+
+					File root = Environment.getExternalStorageDirectory();
+
+					String localFilePath = root.getPath() + file;
+
+
+
+					FileOutputStream fos = new FileOutputStream(localFilePath, false);
+
+					fos.write("Run\tMethod\tFps\n".getBytes());
+
+					for(int i = 0; i < 100; i++){
+						fos.write(((i+1)+"\t"+ 1 +"\t"+ runtimes[i] +"\n").getBytes());
+					}
+
+					fos.close();
+					Log.d("Captain's Log", "Fps were written to runtimes.txt");
+				} catch (Exception e) {
+
+					e.printStackTrace();
+
+				}
+
+			}
+//            if (skipFrames) {
+//                if (frameCount < skipBelow) {
+//                    frameCount++;
+//                    return;
+//                } else if (frameCount >= skipUntil) {
+//                    frameCount = 0;
+//                    return;
+//                }
+//            }
+//
             frameCount++;
 
             Canvas canvas = null;
@@ -230,6 +287,7 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 //            rgb = null;
 //        }
 
+		frameCount = 0;
 //        skipFrames = preferences.getBoolean("skipFrames", Boolean.parseBoolean(getString(R.string.defaultSkipFrames)));
         skipFrames = false;
 //        final int rate = Integer.parseInt(preferences.getString("skipRate", getString(R.string.defaultSkipRate)));
@@ -239,7 +297,8 @@ SharedPreferences.OnSharedPreferenceChangeListener {
         final int divisor = 10;
         skipBelow = rate / divisor;
         skipUntil = 100 / divisor;
-
+        runtimes = new float [100];
+        oldTime = android.os.SystemClock.uptimeMillis();
 //        if (preferences.getBoolean("displayName", Boolean.parseBoolean(getString(R.string.defaultDisplayName)))) {
 //            name.setVisibility(View.VISIBLE);
 //        } else {
