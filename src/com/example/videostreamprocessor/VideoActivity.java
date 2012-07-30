@@ -152,9 +152,10 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 	public void onPreviewFrame(byte[] yuv, Camera camera) {
 		if (holder != null) {
 			newTime = android.os.SystemClock.uptimeMillis();
-			float dt = newTime-oldTime;
+			//work out delta time and convert to seconds
+			float dt = ((newTime-oldTime)/1000);
 		
-			float fpms = 1.0f / dt;
+			float fps = 1.0f / dt;
 			
 //			Log.d("Captain's Log", "(ms) oldTime-> " + oldTime + " newTime-> " + newTime);
 //			Log.d("Captain's Log", "(sec) oldTime-> " + (oldTime/1000) + " newTime-> " + (newTime/1000));
@@ -163,12 +164,12 @@ SharedPreferences.OnSharedPreferenceChangeListener {
 //			Log.d("Captain's Log", "deltaT (sec): "+(dt/1000)+" @ frame "+ frameCount);
 //
 //			Log.d("Captain's Log", "FpMs: "+fpms);
-//			Log.d("Captain's Log", "Fps: "+ (fpms/1000));
+//			Log.d("Captain's Log", "Fps: "+ fps);
 			
 			oldTime = newTime;
 
 			if(frameCount > 0 && frameCount < 101){
-				runtimes[frameCount-1] = (fpms/1000);
+				runtimes[frameCount-1] = (fps);
 			}
 			
 			if(frameCount == 101){
